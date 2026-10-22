@@ -13,6 +13,16 @@ A small, private teleprompter that runs in the browser. There is no server and n
 - **Text size** slider (the **+ / −** keys also work), **Mirror** for beam-splitter glass, **Full screen**, and **Top**.
 - **Scroll by hand** with the touchpad, mouse wheel or touchscreen, whether playing or paused.
 - A yellow **reading line** marks where to read. While the script is playing, the controls fade and the screen stays awake.
+- **Works offline** after it has been opened once (see below).
+
+## Offline use
+
+After the app has been opened once with an internet connection, it keeps a copy of its own files on the Chromebook. It then opens and runs with no connection, from the launcher or the bookmarked address.
+
+- **Works offline:** pasting a script, uploading a .docx or .txt file, and every teleprompter control.
+- **Needs internet:** **Choose Google Doc**. Offline, the button shows "Google unavailable" and students can paste or upload instead. To prepare offline, students can download the doc beforehand (File → Download → .docx).
+- **Updates:** when online, the app always loads the newest version, so changes you publish reach students the next time they open it. No cache clearing or version bumps are needed.
+- **What is stored:** only the app's own files (the page, code, styles, config and icons). Student scripts are never stored.
 
 ## Security and privacy
 
@@ -21,7 +31,7 @@ A small, private teleprompter that runs in the browser. There is no server and n
 | Strict Content-Security-Policy | The page can only run its own files and Google's sign-in/Picker code. It blocks inline scripts, plugins and form posts to anywhere else. |
 | Text-only rendering | Script text is inserted as plain text and never as HTML, so a doc can't inject code. |
 | Narrowest Google scope (`drive.file`) | The app can read **only the single doc a student picks**. It can't see the rest of their Drive, and it has no write access. |
-| No storage of content | Scripts and sign-in tokens stay in memory only and are gone when the tab closes. The only thing saved on the device is speed/size/mirror preferences. |
+| No storage of content | Scripts and sign-in tokens stay in memory only and are gone when the tab closes. The only things saved on the device are speed/size/mirror preferences and an offline copy of the app's own files. |
 | No tracking | There are no analytics, cookies, ads or third-party fonts. |
 | Safe file parsing | The built-in .docx reader has size limits (20 MB file, 60 MB unzipped) to guard against malicious files. |
 | Optional domain lock | Set `SCHOOL_DOMAIN` so the sign-in screen suggests your school's accounts. For a hard lock, use the "Internal" setting below. |
@@ -75,6 +85,7 @@ These values are **not secrets**: Google locks them to your site's address. Your
 - `styles.css`: the styling
 - `config.js`: the Google settings (the only file you edit)
 - `manifest.json` and the icons: let the app be installed on Chromebooks
+- `sw.js`: the service worker that makes the app work offline
 
 ## Keyboard shortcuts
 

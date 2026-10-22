@@ -65,9 +65,63 @@
     return t;
   }
 
+  // ---------- Language filter ----------
+  // Builds one regex from wordlist.js + config.js. Each letter may repeat
+  // (fuuuck), use a look-alike (sh1t, a$$) or be split by . _ - (f.u.c.k).
+  var FILTER_MODE = ["mask", "block", "off"].indexOf(CFG.PROFANITY_FILTER) >= 0
+    ? CFG.PROFANITY_FILTER : "mask";
+  var LOOKALIKES = { a: "a@4", b: "b8", e: "e3", g: "g9", i: "i1!|*", l: "l1|", o: "o0", s: "s$5", t: "t7+", u: "uv*" };
+  var allowedWords = {};
+  (CFG.ALLOWED_WORDS || []).forEach(function (w) { allowedWords[String(w).toLowerCase()] = true; });
+  var badWordRe = buildBadWordRe(
+    [].concat(window.TELEPROMPTER_WORDLIST || [], CFG.EXTRA_BLOCKED_WORDS || []));
+
+  function buildBadWordRe(words) {
+    var parts = [];
+    words.forEach(function (entry) {
+      var w = String(entry || "").trim().toLowerCase();
+      var anyStart = w.charAt(0) === "*", anyEnd = w.length > 1 && w.slice(-1) === "*";
+      w = w.replace(/^\*|\*$/g, "");
+      if (!w || allowedWords[w]) return;
+      var core = w.split("").map(function (ch) {
+        if (/\s/.test(ch)) return "\\s+";
+        var set = (LOOKALIKES[ch] || ch).replace(/[\\\]\[^-]/g, "\\$&");
+        return "[" + set + "]+";
+      }).join("[._-]*");
+      parts.push({
+        len: w.length,
+        re: "(?<![\\p{L}\\p{N}])" + (anyStart ? "\\p{L}*" : "") + core +
+          (anyEnd ? "\\p{L}*" : "(?:e?s)?") + "(?![\\p{L}\\p{N}])"
+      });
+    });
+    if (!parts.length) return null;
+    parts.sort(function (x, y) { return y.len - x.len; });
+    return new RegExp(parts.map(function (p) { return p.re; }).join("|"), "giu");
+  }
+
+  function isBadWord(match) { return !allowedWords[match.toLowerCase()]; }
+
+  function maskBadWords(text) {
+    if (FILTER_MODE === "off" || !badWordRe) return text;
+    return text.replace(badWordRe, function (m) {
+      return isBadWord(m) ? m.replace(/\S/g, "*") : m;
+    });
+  }
+
+  function findBadWords(text) {
+    var found = [];
+    if (FILTER_MODE === "off" || !badWordRe) return found;
+    badWordRe.lastIndex = 0;
+    var m;
+    while ((m = badWordRe.exec(text))) {
+      if (isBadWord(m[0])) found.push({ index: m.index, length: m[0].length });
+    }
+    return found;
+  }
+
   function renderScript(text) {
     scriptText.replaceChildren();
-    var lines = text.split("\n");
+    var lines = maskBadWords(text).split("\n");
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
@@ -85,6 +139,18 @@
       scriptInput.focus();
       return;
     }
+    if (FILTER_MODE === "block") {
+      var bad = findBadWords(scriptInput.value);
+      if (bad.length) {
+        setStatus("Your script has " + bad.length + (bad.length === 1 ? " word" : " words") +
+          " that aren't allowed. The first one is highlighted. Change " +
+          (bad.length === 1 ? "it" : "them") + ", then press Start.", "error");
+        scriptInput.focus();
+        scriptInput.setSelectionRange(bad[0].index, bad[0].index + bad[0].length);
+        return;
+      }
+    }
+    setStatus("");
     openPrompter(text);
   });
 

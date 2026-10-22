@@ -16,6 +16,7 @@ var APP_FILES = [
   "app.js",
   "styles.css",
   "config.js",
+  "wordlist.js",
   "manifest.json",
   "icon-192.png",
   "icon-512.png"

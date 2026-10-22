@@ -22,5 +22,17 @@ window.TELEPROMPTER_CONFIG = Object.freeze({
 
   // Optional: limit sign-in to your school's Google Workspace domain,
   // e.g. "myschool.org". Leave "" to allow any account.
-  SCHOOL_DOMAIN: ""
+  SCHOOL_DOMAIN: "",
+
+  // Language filter, using the words in wordlist.js:
+  //   "mask"  - bad words show as **** on the teleprompter (default)
+  //   "block" - the script won't start until those words are changed
+  //   "off"   - no filtering
+  PROFANITY_FILTER: "mask",
+
+  // More words to filter, e.g. ["damn", "crap"]. Same patterns as wordlist.js.
+  EXTRA_BLOCKED_WORDS: [],
+
+  // Words that should never be filtered, e.g. ["badass"]
+  ALLOWED_WORDS: []
 });

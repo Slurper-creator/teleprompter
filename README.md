@@ -14,6 +14,7 @@ A small, private teleprompter that runs in the browser. There is no server and n
 - **Scroll by hand** with the touchpad, mouse wheel or touchscreen, whether playing or paused.
 - A yellow **reading line** marks where to read. While the script is playing, the controls fade and the screen stays awake.
 - **Works offline** after it has been opened once (see below).
+- **Language filter**: bad words are masked as `****` on the teleprompter, or can block the script from starting (see below).
 
 ## Offline use
 
@@ -23,6 +24,24 @@ After the app has been opened once with an internet connection, it keeps a copy 
 - **Needs internet:** **Choose Google Doc**. Offline, the button shows "Google unavailable" and students can paste or upload instead. To prepare offline, students can download the doc beforehand (File → Download → .docx).
 - **Updates:** when online, the app always loads the newest version, so changes you publish reach students the next time they open it. No cache clearing or version bumps are needed.
 - **What is stored:** only the app's own files (the page, code, styles, config and icons). Student scripts are never stored.
+
+## Language filter
+
+The app checks scripts against the word list in `wordlist.js`. Choose what happens with `PROFANITY_FILTER` in `config.js`:
+
+| Setting | What students see |
+|---|---|
+| `"mask"` (default) | Filtered words show as `****` on the teleprompter. The text box keeps their original text. |
+| `"block"` | **Start** refuses to open the teleprompter. It says how many words need changing and highlights the first one. |
+| `"off"` | No filtering. |
+
+- **Add words**: put them in `EXTRA_BLOCKED_WORDS`, for example `["damn", "crap"]`, or edit `wordlist.js`.
+- **Allow words**: put them in `ALLOWED_WORDS`, for example `["badass"]`.
+- **Patterns**: `word` matches the whole word and its plural. `word*` matches words that start with it, `*word` words that end with it, and `*word*` words that contain it.
+- **Disguises are caught**: repeated letters (`fuuuck`), look-alike characters (`sh1t`, `$hit`, `a$$`, `f*ck`) and dots or dashes between letters (`f.u.c.k`).
+- **Whole words only**, so words like *class*, *assignment*, *Scunthorpe* or *shiitake* are left alone. Words with common innocent meanings (*dick*, *cock*, *prick*, *hoe*, *cum*) and mild words (*damn*, *hell*, *crap*) are not on the default list. Add them if you want them filtered.
+
+The filter runs entirely on the Chromebook. Nothing is logged or reported.
 
 ## Security and privacy
 
@@ -83,7 +102,8 @@ These values are **not secrets**: Google locks them to your site's address. Your
 - `index.html`: the page, including its security policy
 - `app.js`: all app logic, with no external libraries
 - `styles.css`: the styling
-- `config.js`: the Google settings (the only file you edit)
+- `config.js`: the Google and language-filter settings
+- `wordlist.js`: the language filter's word list
 - `manifest.json` and the icons: let the app be installed on Chromebooks
 - `sw.js`: the service worker that makes the app work offline
 

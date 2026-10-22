@@ -52,7 +52,9 @@ The filter runs entirely on the Chromebook. Nothing is logged or reported.
 | Narrowest Google scope (`drive.file`) | The app can read **only the single doc a student picks**. It can't see the rest of their Drive, and it has no write access. |
 | No storage of content | Scripts and sign-in tokens stay in memory only and are gone when the tab closes. The only things saved on the device are speed/size/mirror preferences and an offline copy of the app's own files. |
 | No tracking | There are no analytics, cookies, ads or third-party fonts. |
-| Safe file parsing | The built-in .docx reader has size limits (20 MB file, 60 MB unzipped) to guard against malicious files. |
+| Safe file parsing | The built-in .docx reader has size limits (20 MB file, 60 MB unzipped). It unzips in chunks and stops at the limit, so a "zip bomb" can't fill memory. It also refuses XML entity tricks. |
+| No framing | The app won't run inside another site's frame, which blocks clickjacking even on hosts like GitHub Pages that can't send `X-Frame-Options`. |
+| Fast language filter | The filter's patterns have fixed limits, so even a 500,000-character script is checked in well under a second and can't freeze the tab. |
 | Optional domain lock | Set `SCHOOL_DOMAIN` so the sign-in screen suggests your school's accounts. For a hard lock, use the "Internal" setting below. |
 
 **Student data (FERPA/COPPA):** the app never transmits or keeps student content. The only data exchange is between the student's browser and Google, under your existing Workspace agreement.

@@ -11,6 +11,14 @@
 (function () {
   "use strict";
 
+  // Refuse to run inside another site's frame (clickjacking). GitHub Pages
+  // can't send X-Frame-Options, and a <meta> CSP ignores frame-ancestors.
+  if (window.top !== window.self) {
+    document.body.replaceChildren();
+    document.body.textContent = "Open the Teleprompter directly at its own address.";
+    return;
+  }
+
   var CFG = window.TELEPROMPTER_CONFIG || {};
   var MAX_CHARS = 500000;              // ~250 pages of text
   var MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -86,12 +94,14 @@
       var core = w.split("").map(function (ch) {
         if (/\s/.test(ch)) return "\\s+";
         var set = (LOOKALIKES[ch] || ch).replace(/[\\\]\[^-]/g, "\\$&");
-        return "[" + set + "]+";
-      }).join("[._-]*");
+        return "[" + set + "]{1,8}";
+      }).join("[._-]{0,3}");
+      // Bounded repeats ({1,8}, {0,30}) keep matching fast on huge or
+      // hostile input; unbounded + and * can take minutes on "assssss…".
       parts.push({
         len: w.length,
-        re: "(?<![\\p{L}\\p{N}])" + (anyStart ? "\\p{L}*" : "") + core +
-          (anyEnd ? "\\p{L}*" : "(?:e?s)?") + "(?![\\p{L}\\p{N}])"
+        re: "(?<![\\p{L}\\p{N}])" + (anyStart ? "\\p{L}{0,30}" : "") + core +
+          (anyEnd ? "\\p{L}{0,30}" : "(?:e?s)?") + "(?![\\p{L}\\p{N}])"
       });
     });
     if (!parts.length) return null;
@@ -188,6 +198,9 @@
   // A .docx is a ZIP archive; the text lives in word/document.xml.
   async function docxToText(buf) {
     var xml = await readZipEntry(buf, "word/document.xml");
+    // Real .docx files never have a DOCTYPE; refusing one blocks
+    // entity-expansion tricks ("billion laughs").
+    if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw new Error("Unexpected DOCTYPE");
     var doc = new DOMParser().parseFromString(xml, "application/xml");
     if (doc.getElementsByTagName("parsererror").length) throw new Error("Bad document XML");
     var body = doc.getElementsByTagNameNS(W_NS, "body")[0];
@@ -241,10 +254,20 @@
       var data = new Uint8Array(buf, start, compSize);
       if (method === 0) return dec.decode(data);
       if (method !== 8) throw new Error("Unsupported compression");
-      var stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
-      var out = await new Response(stream).arrayBuffer();
-      if (out.byteLength > MAX_UNZIPPED_BYTES) throw new Error("Document too large");
-      return dec.decode(out);
+      // Unzip in chunks and stop at the limit, so a "zip bomb" that lies
+      // about its size can't fill memory before the check.
+      var reader = new Blob([data]).stream()
+        .pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+      var chunks = [], total = 0, chunk;
+      while (!(chunk = await reader.read()).done) {
+        total += chunk.value.byteLength;
+        if (total > MAX_UNZIPPED_BYTES) {
+          reader.cancel().catch(function () {});
+          throw new Error("Document too large");
+        }
+        chunks.push(chunk.value);
+      }
+      return dec.decode(await new Blob(chunks).arrayBuffer());
     }
     throw new Error("No document text found");
   }

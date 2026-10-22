@@ -2,6 +2,16 @@
 
 All notable changes to the Teleprompter are listed here, newest first.
 
+## 1.2.1 — 2026-10-21 · Security fixes
+
+### Fixed
+- **Language filter slowdown (ReDoS).** Unbounded repeats in the filter's patterns made some input, such as a long run of one letter, take time that grew with the square of its length. A 500,000-character paste could freeze the tab for many minutes. The repeats are now bounded, and the worst case takes about 70 ms.
+- **.docx zip bomb.** The reader unzipped the whole document before checking the 60 MB limit, so a small file that expands to gigabytes could exhaust memory. It now unzips in chunks and stops at the limit. A 1 MB file that expands to 1 GB is rejected in about 0.1 s.
+- **Clickjacking.** The app now refuses to run inside another site's frame. GitHub Pages can't send `X-Frame-Options`, and a `<meta>` CSP ignores `frame-ancestors`.
+
+### Changed
+- The .docx reader rejects documents that contain an XML `DOCTYPE` or `ENTITY` declaration. Real .docx files never do, and this blocks entity-expansion attacks.
+
 ## 1.2.0 — 2026-10-21 · Language filter
 
 ### Added

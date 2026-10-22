@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    Content Security Policy: only this site's own files and Google's
+    sign-in / Picker / Drive services may load or be contacted.
+    No inline scripts, no third-party trackers, no other servers.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://apis.google.com https://accounts.google.com https://www.gstatic.com;
+    style-src 'self' 'unsafe-inline' https://accounts.google.com;
+    img-src 'self' data: https://*.googleusercontent.com https://ssl.gstatic.com https://www.gstatic.com https://drive-thirdparty.googleusercontent.com;
+    connect-src 'self' https://www.googleapis.com https://accounts.google.com https://content.googleapis.com;
+    frame-src https://docs.google.com https://drive.google.com https://accounts.google.com https://content.googleapis.com;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'none';
+    form-action 'none';
+  ">
+  <meta name="referrer" content="no-referrer">
+  <title>Teleprompter</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <meta name="theme-color" content="#111418">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ============ LOAD SCREEN ============ -->
+  <main id="loadScreen" class="screen">
+    <div class="load-card">
+      <h1>Teleprompter</h1>
+      <p class="sub">Load your script, then press <kbd>Space</kbd> to start.</p>
+
+      <div id="googleBlock" class="google-block" hidden>
+        <button id="pickDocBtn" class="btn btn-primary btn-big" type="button">
+          Choose Google Doc
+        </button>
+        <p class="hint">You'll sign in with your school Google account. The app can only open the one doc you pick.</p>
+        <div class="divider"><span>or</span></div>
+      </div>
+
+      <label for="scriptInput" class="label">Paste your script</label>
+      <textarea id="scriptInput" rows="10" spellcheck="true"
+        placeholder="In your Google Doc: Ctrl+A to select all, Ctrl+C to copy, then click here and press Ctrl+V."></textarea>
+
+      <div class="row">
+        <label class="btn btn-ghost file-btn">
+          Upload .docx or .txt
+          <input id="fileInput" type="file" accept=".docx,.txt,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        </label>
+        <button id="startBtn" class="btn btn-primary" type="button">Start teleprompter</button>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <p class="privacy">Your script stays on this Chromebook. Nothing is uploaded or saved.</p>
+    </div>
+  </main>
+
+  <!-- ============ PROMPTER SCREEN ============ -->
+  <section id="prompterScreen" class="screen prompter" hidden aria-label="Teleprompter">
+    <div id="viewport" class="viewport">
+      <div id="guide" class="guide" aria-hidden="true"></div>
+      <div id="scroller" class="scroller">
+        <div id="scriptText" class="script-text"></div>
+      </div>
+    </div>
+
+    <div id="controls" class="controls" role="toolbar" aria-label="Teleprompter controls">
+      <button id="backBtn" class="btn btn-ghost" type="button" title="Back to script (Esc)">&#8592; Edit</button>
+      <button id="restartBtn" class="btn btn-ghost" type="button" title="Back to top (Home)">&#8634; Top</button>
+      <button id="playBtn" class="btn btn-primary play" type="button" title="Play / Pause (Space)" aria-pressed="false">&#9654; Play</button>
+
+      <div class="slider-group">
+        <label for="speed">Speed <output id="speedOut">5</output></label>
+        <input id="speed" type="range" min="1" max="20" step="1" value="5" title="Speed (Up / Down arrows)">
+      </div>
+
+      <div class="slider-group">
+        <label for="fontSize">Size <output id="fontOut">56</output></label>
+        <input id="fontSize" type="range" min="24" max="120" step="2" value="56" title="Text size (+ / -)">
+      </div>
+
+      <button id="mirrorBtn" class="btn btn-ghost" type="button" title="Mirror text (M)" aria-pressed="false">Mirror</button>
+      <button id="fsBtn" class="btn btn-ghost" type="button" title="Full screen (F)">Full screen</button>
+    </div>
+  </section>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

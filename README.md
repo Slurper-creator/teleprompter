@@ -106,6 +106,7 @@ These values are **not secrets**: Google locks them to your site's address. Your
 - `wordlist.js`: the language filter's word list
 - `manifest.json` and the icons: let the app be installed on Chromebooks
 - `sw.js`: the service worker that makes the app work offline
+- `CHANGELOG.md`: the list of changes in each version
 
 ## Keyboard shortcuts
 

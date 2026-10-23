@@ -2,6 +2,25 @@
 
 All notable changes to the Teleprompter are listed here, newest first.
 
+## 1.3.0 — 2026-10-23 · Accessibility (WCAG 2.1 AA)
+
+### Added
+- **Letter keys** button. It turns the single-key shortcuts (K, M, F, + and −) on or off for speech-input users (WCAG 2.1.4). The setting is remembered.
+- Screen-reader announcements for changes made with shortcuts: Playing, Paused, Speed, Text size, Mirror on/off, Back at the top, End of script.
+- Slider values read as "6 of 20" and "56 pixels".
+- Visible instructions above the text box, which replace the placeholder text.
+- Support for reduced motion and Windows High Contrast (forced colors).
+
+### Fixed
+- **Space on a focused button played or paused the script** instead of pressing that button. Space now presses the focused button.
+- **Low contrast.** Blue buttons had 3.7:1 contrast with white text and now have 5.2:1. The text box border had 1.5:1 and now has 4.4:1.
+- **Hidden focus on Upload.** The upload button now shows a focus outline. Focus outlines are thicker (3 px) and brighter.
+- The Play button no longer reads its symbols ("black right-pointing triangle"). Its name changes between Play and Pause, without a conflicting "pressed" state.
+- The arrow symbols on Edit and Top are no longer read aloud.
+- An empty or blocked script marks the text box as invalid and links it to the error message.
+- The page title shows which screen is open. The teleprompter screen is now a main landmark with a heading.
+- The controls reappear when a key is pressed while they are faded.
+
 ## 1.2.1 — 2026-10-21 · Security fixes
 
 ### Fixed

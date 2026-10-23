@@ -16,6 +16,18 @@ A small, private teleprompter that runs in the browser. There is no server and n
 - **Works offline** after it has been opened once (see below).
 - **Language filter**: bad words are masked as `****` on the teleprompter, or can block the script from starting (see below).
 
+## Accessibility
+
+The app is built to meet **WCAG 2.1 Level AA**, the standard used for ADA compliance in schools.
+
+- **Keyboard:** every control works with Tab, Space and Enter. Space and Enter press the focused button, and the shortcuts below work from anywhere on the teleprompter screen.
+- **Screen readers:** buttons, sliders and the text box have clear names. Changes made with shortcuts (Playing, Paused, Speed 6, Mirror on, End of script) are announced. Errors are announced and mark the text box as needing attention.
+- **Speech input:** the single-key shortcuts (K, M, F, + and −) can be turned off with the **Letter keys** button, so spoken words aren't taken as commands. The setting is remembered.
+- **Contrast:** text has at least 4.5:1 contrast, and field borders and focus outlines have at least 3:1. Every control shows a thick blue outline when it has keyboard focus.
+- **Moving text:** scrolling only starts when the student presses Play, and it can be paused at any time.
+- **Zoom and small screens:** the page reflows at 320 px wide (400% zoom) with no sideways scrolling.
+- **Reduced motion and high contrast:** the controls stop fading in and out when the device asks for less motion, and buttons, states and the reading line stay visible in Windows High Contrast mode.
+
 ## Offline use
 
 After the app has been opened once with an internet connection, it keeps a copy of its own files on the Chromebook. It then opens and runs with no connection, from the launcher or the bookmarked address.
@@ -122,3 +134,5 @@ These values are **not secrets**: Google locks them to your site's address. Your
 | M | Mirror |
 | F | Full screen |
 | Esc | Back to the script editor |
+
+Turn off K, M, F and + / − with the **Letter keys** button. Space, the arrow keys, Page Up/Down, Home and Esc always work.

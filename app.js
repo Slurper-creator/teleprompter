@@ -37,22 +37,35 @@
   var playBtn = $("playBtn"), backBtn = $("backBtn"), restartBtn = $("restartBtn");
   var speedIn = $("speed"), speedOut = $("speedOut");
   var fontIn = $("fontSize"), fontOut = $("fontOut");
-  var mirrorBtn = $("mirrorBtn"), fsBtn = $("fsBtn");
+  var mirrorBtn = $("mirrorBtn"), fsBtn = $("fsBtn"), keysBtn = $("keysBtn");
+  var playIcon = $("playIcon"), playLabel = $("playLabel"), announcer = $("announcer");
 
   // ---------- Status messages ----------
   function setStatus(msg, kind) {
     statusEl.textContent = msg || "";
     statusEl.className = "status" + (kind ? " " + kind : "");
+    // Mark the text box invalid only when the error is about it.
+    if (kind !== "error") scriptInput.removeAttribute("aria-invalid");
+  }
+
+  // Tells screen-reader users what a keyboard shortcut just changed.
+  var announceTimer = 0;
+  function announce(msg) {
+    clearTimeout(announceTimer);
+    announcer.textContent = "";
+    // A short gap makes screen readers repeat the same message twice in a row.
+    announceTimer = setTimeout(function () { announcer.textContent = msg; }, 50);
   }
 
   // ---------- Settings (display preferences only) ----------
-  var settings = { speed: 5, font: 56, mirror: false };
+  var settings = { speed: 5, font: 56, mirror: false, letterKeys: true };
   try {
     var saved = JSON.parse(localStorage.getItem("tp-settings") || "{}");
     if (saved && typeof saved === "object") {
       if (Number.isFinite(saved.speed)) settings.speed = clamp(saved.speed, 1, 20);
       if (Number.isFinite(saved.font)) settings.font = clamp(saved.font, 24, 120);
       settings.mirror = saved.mirror === true;
+      settings.letterKeys = saved.letterKeys !== false;
     }
   } catch (e) { /* storage unavailable; use defaults */ }
 
@@ -146,6 +159,7 @@
     var text = cleanText(scriptInput.value);
     if (!text) {
       setStatus("Paste your script or load a file first.", "error");
+      scriptInput.setAttribute("aria-invalid", "true");
       scriptInput.focus();
       return;
     }
@@ -155,6 +169,7 @@
         setStatus("Your script has " + bad.length + (bad.length === 1 ? " word" : " words") +
           " that aren't allowed. The first one is highlighted. Change " +
           (bad.length === 1 ? "it" : "them") + ", then press Start.", "error");
+        scriptInput.setAttribute("aria-invalid", "true");
         scriptInput.focus();
         scriptInput.setSelectionRange(bad[0].index, bad[0].index + bad[0].length);
         return;
@@ -162,6 +177,13 @@
     }
     setStatus("");
     openPrompter(text);
+  });
+
+  scriptInput.addEventListener("input", function () {
+    if (scriptInput.getAttribute("aria-invalid")) {
+      scriptInput.removeAttribute("aria-invalid");
+      setStatus("");
+    }
   });
 
   fileInput.addEventListener("change", async function () {
@@ -392,6 +414,7 @@
     renderScript(text);
     loadScreen.hidden = true;
     prompterScreen.hidden = false;
+    document.title = "Teleprompter — playing your script";
     offset = 0;
     applySettings();
     applyOffset();
@@ -403,6 +426,7 @@
     if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
     prompterScreen.hidden = true;
     loadScreen.hidden = false;
+    document.title = "Teleprompter";
     scriptInput.focus();
   }
 
@@ -425,7 +449,7 @@
     if (lastTs) {
       var dt = Math.min(0.1, (ts - lastTs) / 1000);  // avoid jumps after tab switch
       offset += pixelsPerSecond() * dt;
-      if (offset >= maxOffset()) { offset = maxOffset(); applyOffset(); pause(); return; }
+      if (offset >= maxOffset()) { offset = maxOffset(); applyOffset(); pause(); announce("End of script"); return; }
       applyOffset();
     }
     lastTs = ts;
@@ -437,8 +461,8 @@
     if (offset >= maxOffset()) offset = 0;           // finished? start over
     playing = true;
     lastTs = 0;
-    playBtn.innerHTML = "&#10074;&#10074; Pause";
-    playBtn.setAttribute("aria-pressed", "true");
+    playIcon.textContent = "\u275A\u275A";
+    playLabel.textContent = "Pause";
     rafId = requestAnimationFrame(tick);
     requestWakeLock();
     scheduleFade();
@@ -447,13 +471,14 @@
   function pause() {
     playing = false;
     cancelAnimationFrame(rafId);
-    playBtn.innerHTML = "&#9654; Play";
-    playBtn.setAttribute("aria-pressed", "false");
+    playIcon.textContent = "\u25B6";
+    playLabel.textContent = "Play";
     releaseWakeLock();
     showControls();
   }
 
   function togglePlay() { playing ? pause() : play(); }
+  function togglePlayAndAnnounce() { togglePlay(); announce(playing ? "Playing" : "Paused"); }
 
   // Keep the Chromebook screen awake while scrolling.
   async function requestWakeLock() {
@@ -487,7 +512,10 @@
 
   function applySettings() {
     speedIn.value = settings.speed; speedOut.textContent = settings.speed;
+    speedIn.setAttribute("aria-valuetext", settings.speed + " of 20");
     fontIn.value = settings.font; fontOut.textContent = settings.font;
+    fontIn.setAttribute("aria-valuetext", settings.font + " pixels");
+    keysBtn.setAttribute("aria-pressed", String(settings.letterKeys));
     scriptText.style.fontSize = settings.font + "px";
     guide.style.fontSize = settings.font + "px";
     viewport.classList.toggle("mirrored", settings.mirror);
@@ -507,13 +535,17 @@
   }
 
   // Control wiring
-  playBtn.addEventListener("click", togglePlay);
+  playBtn.addEventListener("click", togglePlayAndAnnounce);
   backBtn.addEventListener("click", closePrompter);
-  restartBtn.addEventListener("click", function () { offset = 0; applyOffset(); });
+  restartBtn.addEventListener("click", function () { offset = 0; applyOffset(); announce("Back at the top"); });
   speedIn.addEventListener("input", function () { setSpeed(Number(speedIn.value)); });
   fontIn.addEventListener("input", function () { setFont(Number(fontIn.value)); });
   mirrorBtn.addEventListener("click", function () {
     settings.mirror = !settings.mirror; applySettings(); saveSettings();
+  });
+  keysBtn.addEventListener("click", function () {
+    settings.letterKeys = !settings.letterKeys; applySettings(); saveSettings();
+    announce(settings.letterKeys ? "Letter key shortcuts on" : "Letter key shortcuts off");
   });
   fsBtn.addEventListener("click", toggleFullscreen);
   viewport.addEventListener("click", togglePlay);    // tap the text to play/pause
@@ -544,32 +576,48 @@
   }, { passive: true });
   viewport.addEventListener("touchend", function () { touchY = null; });
 
-  // Keyboard shortcuts (only on the prompter screen)
+  // Keyboard shortcuts (only on the prompter screen).
+  // - Space, Enter and arrows keep their normal job on a focused button or
+  //   slider, so keyboard users can operate every control.
+  // - Single-character shortcuts (K, M, F, +, -) can be turned off with the
+  //   "Letter keys" button (WCAG 2.1.4), for speech-input users.
   document.addEventListener("keydown", function (e) {
-    if (prompterScreen.hidden) return;
-    var onRange = e.target && e.target.type === "range";
-    switch (e.key) {
+    if (prompterScreen.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    var t = e.target || {};
+    var onButton = t.tagName === "BUTTON";
+    var onRange = t.type === "range";
+    var key = e.key;
+    var isLetterKey = key.length === 1 && key !== " ";
+    if (isLetterKey && !settings.letterKeys) return;
+
+    showControls();
+    if (playing) scheduleFade();
+
+    switch (key) {
       case " ":
-      case "k":
-        e.preventDefault(); togglePlay(); break;
+        if (onButton) return;                 // let Space press the focused button
+        e.preventDefault(); togglePlayAndAnnounce(); break;
+      case "k": case "K":
+        e.preventDefault(); togglePlayAndAnnounce(); break;
       case "ArrowUp":
         if (onRange) return;
-        e.preventDefault(); setSpeed(settings.speed + 1); break;
+        e.preventDefault(); setSpeed(settings.speed + 1); announce("Speed " + settings.speed); break;
       case "ArrowDown":
         if (onRange) return;
-        e.preventDefault(); setSpeed(settings.speed - 1); break;
+        e.preventDefault(); setSpeed(settings.speed - 1); announce("Speed " + settings.speed); break;
       case "PageDown":
         e.preventDefault(); offset += viewport.clientHeight * 0.5; applyOffset(); break;
       case "PageUp":
         e.preventDefault(); offset -= viewport.clientHeight * 0.5; applyOffset(); break;
       case "Home":
-        e.preventDefault(); offset = 0; applyOffset(); break;
+        if (onRange) return;
+        e.preventDefault(); offset = 0; applyOffset(); announce("Back at the top"); break;
       case "+": case "=":
-        setFont(settings.font + 4); break;
+        setFont(settings.font + 4); announce("Text size " + settings.font); break;
       case "-": case "_":
-        setFont(settings.font - 4); break;
+        setFont(settings.font - 4); announce("Text size " + settings.font); break;
       case "m": case "M":
-        mirrorBtn.click(); break;
+        mirrorBtn.click(); announce(settings.mirror ? "Mirror on" : "Mirror off"); break;
       case "f": case "F":
         toggleFullscreen(); break;
       case "Escape":

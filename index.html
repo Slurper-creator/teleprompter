@@ -44,8 +44,8 @@
       </div>
 
       <label for="scriptInput" class="label">Paste your script</label>
-      <textarea id="scriptInput" rows="10" spellcheck="true"
-        placeholder="In your Google Doc: Ctrl+A to select all, Ctrl+C to copy, then click here and press Ctrl+V."></textarea>
+      <p id="scriptHelp" class="hint help">In your Google Doc, press Ctrl+A to select all and Ctrl+C to copy. Then click in the box below and press Ctrl+V.</p>
+      <textarea id="scriptInput" rows="10" spellcheck="true" aria-describedby="scriptHelp status"></textarea>
 
       <div class="row">
         <label class="btn btn-ghost file-btn">
@@ -55,13 +55,14 @@
         <button id="startBtn" class="btn btn-primary" type="button">Start teleprompter</button>
       </div>
 
-      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
       <p class="privacy">Your script stays on this Chromebook. Nothing is uploaded or saved.</p>
     </div>
   </main>
 
   <!-- ============ PROMPTER SCREEN ============ -->
-  <section id="prompterScreen" class="screen prompter" hidden aria-label="Teleprompter">
+  <main id="prompterScreen" class="screen prompter" hidden aria-label="Teleprompter">
+    <h1 class="visually-hidden">Teleprompter</h1>
     <div id="viewport" class="viewport">
       <div id="guide" class="guide" aria-hidden="true"></div>
       <div id="scroller" class="scroller">
@@ -70,24 +71,29 @@
     </div>
 
     <div id="controls" class="controls" role="toolbar" aria-label="Teleprompter controls">
-      <button id="backBtn" class="btn btn-ghost" type="button" title="Back to script (Esc)">&#8592; Edit</button>
-      <button id="restartBtn" class="btn btn-ghost" type="button" title="Back to top (Home)">&#8634; Top</button>
-      <button id="playBtn" class="btn btn-primary play" type="button" title="Play / Pause (Space)" aria-pressed="false">&#9654; Play</button>
+      <button id="backBtn" class="btn btn-ghost" type="button" title="Back to script (Esc)" aria-keyshortcuts="Escape"><span aria-hidden="true">&#8592; </span>Edit</button>
+      <button id="restartBtn" class="btn btn-ghost" type="button" title="Back to top (Home)" aria-keyshortcuts="Home"><span aria-hidden="true">&#8634; </span>Top</button>
+      <button id="playBtn" class="btn btn-primary play" type="button" title="Play / Pause (Space)" aria-keyshortcuts="Space"><span id="playIcon" aria-hidden="true">&#9654;</span> <span id="playLabel">Play</span></button>
 
       <div class="slider-group">
-        <label for="speed">Speed <output id="speedOut">5</output></label>
-        <input id="speed" type="range" min="1" max="20" step="1" value="5" title="Speed (Up / Down arrows)">
+        <div class="slider-head"><label for="speed">Speed</label> <output id="speedOut" for="speed" aria-hidden="true">5</output></div>
+        <input id="speed" type="range" min="1" max="20" step="1" value="5" title="Speed (Up / Down arrows)" aria-keyshortcuts="ArrowUp ArrowDown">
       </div>
 
       <div class="slider-group">
-        <label for="fontSize">Size <output id="fontOut">56</output></label>
+        <div class="slider-head"><label for="fontSize">Text size</label> <output id="fontOut" for="fontSize" aria-hidden="true">56</output></div>
         <input id="fontSize" type="range" min="24" max="120" step="2" value="56" title="Text size (+ / -)">
       </div>
 
       <button id="mirrorBtn" class="btn btn-ghost" type="button" title="Mirror text (M)" aria-pressed="false">Mirror</button>
       <button id="fsBtn" class="btn btn-ghost" type="button" title="Full screen (F)">Full screen</button>
+      <button id="keysBtn" class="btn btn-ghost" type="button" aria-pressed="true"
+        title="Turn single-key shortcuts (K, M, F, + and −) on or off">Letter keys</button>
     </div>
-  </section>
+
+    <!-- Announces changes made with keyboard shortcuts to screen readers -->
+    <p id="announcer" class="visually-hidden" role="status" aria-live="polite"></p>
+  </main>
 
   <script src="config.js"></script>
   <script src="wordlist.js"></script>
